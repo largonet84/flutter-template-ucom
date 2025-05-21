@@ -5,7 +5,6 @@ import 'package:finpay/api/local.db.service.dart';
 import 'package:finpay/config/images.dart';
 import 'package:finpay/config/textstyle.dart';
 import 'package:finpay/view/login/login_screen.dart';
-import 'package:finpay/view/splash/welcome_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
