@@ -32,7 +32,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
         title: Text(
-          "Chat Assistant",
+          "Asistencia por Chat",
           style: Theme.of(context).textTheme.titleLarge!.copyWith(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
