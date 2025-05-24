@@ -170,6 +170,8 @@ class Pago {
         fechaPago: DateTime.parse(json['fechaPago']),
       );
 
+  get monto => null;
+
   Map<String, dynamic> toJson() => {
         'codigoPago': codigoPago,
         'codigoReservaAsociada': codigoReservaAsociada,
