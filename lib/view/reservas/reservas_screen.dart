@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:finpay/controller/reserva_controller.dart';
-import 'package:finpay/model/sitema_reservas.dart';
+import 'package:finpay/model/sistema_reservas.dart';
 import 'package:finpay/utils/utiles.dart';
 
 class ReservaScreen extends StatelessWidget {

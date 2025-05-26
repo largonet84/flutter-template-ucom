@@ -1,4 +1,4 @@
-import 'package:finpay/model/sitema_reservas.dart';
+import 'package:finpay/model/sistema_reservas.dart';
 import 'package:get/get.dart';
 import 'package:finpay/api/local.db.service.dart';
 

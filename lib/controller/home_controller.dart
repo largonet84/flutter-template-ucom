@@ -3,7 +3,7 @@
 import 'package:finpay/api/local.db.service.dart';
 import 'package:finpay/config/images.dart';
 import 'package:finpay/config/textstyle.dart';
-import 'package:finpay/model/sitema_reservas.dart';
+import 'package:finpay/model/sistema_reservas.dart';
 import 'package:finpay/model/transaction_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
