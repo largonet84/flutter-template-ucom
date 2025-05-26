@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:finpay/controller/home_controller.dart';
 import 'package:finpay/view/home/home_view.dart';
 import 'package:finpay/view/dashboard/dashboard_view.dart';
-import 'package:finpay/view/card/card_view.dart';
-import 'package:finpay/view/profile/profile_view.dart';
+import 'package:finpay/view/profile/setting_screen.dart';
 
 class TabScreen extends StatefulWidget {
   const TabScreen({Key? key}) : super(key: key);
@@ -15,36 +13,29 @@ class TabScreen extends StatefulWidget {
 
 class _TabScreenState extends State<TabScreen> {
   late HomeController homeController;
-  late List<Widget> _tabs;
+  late List<Widget> _pages;
   int _currentIndex = 0;
 
-@override
-void initState() {
-  super.initState();
-
-  // Registrar el controlador si aún no existe
-  if (!Get.isRegistered<HomeController>()) {
-    Get.put(HomeController());
+  @override
+  void initState() {
+    super.initState();
+    homeController = HomeController();
+    _pages = [
+      HomeView(homeController: homeController),
+      DashboardView(homeController: homeController),
+      SettingScreen()  // Pantalla de perfil/ajustes, sin controller compartido
+    ];
   }
-
-  homeController = Get.find<HomeController>();
-
-  _tabs = [
-    HomeView(homeController: homeController),
-    DashboardView(homeController: homeController),
-    CardView(),
-    ProfileView(),
-  ];
-}
-
-
 
   @override
   Widget build(BuildContext context) {
+    // Colores para íconos activo/inactivo (ejemplo usando el tema actual)
+    final activeColor = Theme.of(context).primaryColor;
+    final inactiveColor = activeColor.withOpacity(0.4);
+
     return Scaffold(
-      body: _tabs[_currentIndex],
+      body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() {
@@ -53,24 +44,16 @@ void initState() {
         },
         items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home, color: Colors.white.withOpacity(0.4)),
-            activeIcon: const Icon(Icons.home, color: Colors.white),
-            label: "home",
+            icon: Icon(Icons.home, color: _currentIndex == 0 ? activeColor : inactiveColor),
+            label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart, color: Colors.white.withOpacity(0.4)),
-            activeIcon: const Icon(Icons.bar_chart, color: Colors.white),
-            label: "statistics",
+            icon: Icon(Icons.dashboard, color: _currentIndex == 1 ? activeColor : inactiveColor),
+            label: 'Dashboard',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.credit_card, color: Colors.white.withOpacity(0.4)),
-            activeIcon: const Icon(Icons.credit_card, color: Colors.white),
-            label: "card",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person, color: Colors.white.withOpacity(0.4)),
-            activeIcon: const Icon(Icons.person, color: Colors.white),
-            label: "Perfil",
+            icon: Icon(Icons.person, color: _currentIndex == 2 ? activeColor : inactiveColor),
+            label: 'Perfil',  // traducido de "profile" a "Perfil"
           ),
         ],
       ),
