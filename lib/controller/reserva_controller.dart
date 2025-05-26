@@ -128,7 +128,7 @@ class ReservaController extends GetxController {
 
   @override
   void onClose() {
-    resetearCampos();
+    //resetearCampos();
     super.onClose();
   }
 }
