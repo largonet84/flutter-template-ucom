@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:finpay/controller/home_controller.dart';
-import 'package:get/get.dart';
 import 'package:finpay/model/sistema_reservas.dart';
 import 'package:finpay/api/local.db.service.dart';
 

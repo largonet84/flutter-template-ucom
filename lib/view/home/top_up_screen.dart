@@ -1,13 +1,10 @@
 // ignore_for_file: deprecated_member_use
 
-import 'package:finpay/config/images.dart';
+import 'package:finpay/api/local.db.service.dart';
 import 'package:finpay/config/textstyle.dart';
-import 'package:finpay/view/home/topup_dialog.dart';
-import 'package:finpay/view/home/widget/amount_container.dart';
+import 'package:finpay/model/sistema_reservas.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
-import 'package:swipe/swipe.dart';
 
 class TopUpSCreen extends StatefulWidget {
   const TopUpSCreen({Key? key}) : super(key: key);
@@ -17,6 +14,84 @@ class TopUpSCreen extends StatefulWidget {
 }
 
 class _TopUpSCreenState extends State<TopUpSCreen> {
+  List<Reserva> reservasPendientes = [];
+  Reserva? reservaSeleccionada;
+
+  @override
+  void initState() {
+    super.initState();
+    cargarReservasPendientes();
+  }
+
+  Future<void> cargarReservasPendientes() async {
+    final db = LocalDBService();
+    final raw = await db.getAll("reservas.json");
+    setState(() {
+      reservasPendientes = raw
+          .map<Reserva>((e) => Reserva.fromJson(e))
+          .where((r) => r.estadoReserva == "PENDIENTE")
+          .toList();
+    });
+  }
+
+  String calcularTiempo(DateTime desde, DateTime hasta) {
+    Duration diferencia = hasta.difference(desde);
+    int dias = diferencia.inDays;
+    int horas = diferencia.inHours % 24;
+
+    String diaTexto = dias == 1 ? 'Día' : 'Días';
+    String horaTexto = horas == 1 ? 'Hora' : 'Horas';
+
+    if (dias == 0) {
+      return '$horas $horaTexto';
+    }
+    return '$dias $diaTexto y $horas $horaTexto';
+  }
+
+  // Opción 1: SnackBar
+  void mostrarSnackBar(BuildContext context, String codigoReserva) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Reserva número $codigoReserva pagada'),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  // Opción 2: AlertDialog
+  void mostrarAlertDialog(BuildContext context, String codigoReserva) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Pago Exitoso'),
+          content: Text('Reserva número $codigoReserva pagada'),
+          actions: [
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Opción 3: GetX Snackbar
+  void mostrarGetXSnackbar(String codigoReserva) {
+    Get.snackbar(
+      'Pago Exitoso',
+      'Reserva número $codigoReserva pagada',
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
+      duration: const Duration(seconds: 3),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,26 +103,18 @@ class _TopUpSCreenState extends State<TopUpSCreen> {
         children: [
           Column(
             children: [
+              // Header
               Padding(
                 padding: const EdgeInsets.only(left: 20, right: 20, top: 50),
                 child: Row(
                   children: [
                     InkWell(
-                      focusColor: Colors.transparent,
-                      highlightColor: Colors.transparent,
-                      hoverColor: Colors.transparent,
-                      splashColor: Colors.transparent,
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                      child: const Icon(
-                        Icons.arrow_back,
-                        color: Colors.white,
-                      ),
+                      onTap: () => Navigator.pop(context),
+                      child: const Icon(Icons.arrow_back, color: Colors.white),
                     ),
                     const Expanded(child: SizedBox()),
                     Text(
-                      "Top Up",
+                      "Pagar Reserva",
                       style: Theme.of(context).textTheme.titleLarge!.copyWith(
                             color: Colors.white,
                             fontSize: 20,
@@ -55,13 +122,11 @@ class _TopUpSCreenState extends State<TopUpSCreen> {
                           ),
                     ),
                     const Expanded(child: SizedBox()),
-                    const Icon(
-                      Icons.arrow_back,
-                      color: Colors.transparent,
-                    ),
+                    const Icon(Icons.arrow_back, color: Colors.transparent),
                   ],
                 ),
               ),
+              // Main Content
               Padding(
                 padding: const EdgeInsets.only(top: 30),
                 child: Container(
@@ -76,191 +141,138 @@ class _TopUpSCreenState extends State<TopUpSCreen> {
                       topRight: Radius.circular(24),
                     ),
                   ),
-                  child: ListView(
-                    physics: const ClampingScrollPhysics(),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 50),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 30),
-                            Container(
-                              height: 80,
-                              width: 80,
-                              decoration: BoxDecoration(
-                                color: const Color(0xffF5F7FE),
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(18.0),
-                                child: SvgPicture.asset(
-                                  DefaultImages.unicorn,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              "Finpay Card",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge!
-                                  .copyWith(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "••••   ••••   ••••   5318",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall!
-                                  .copyWith(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xffA2A0A8),
-                                  ),
-                            ),
-                            const SizedBox(height: 40),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 20, right: 20),
-                              child: amountContainer(context, "500"),
-                            ),
-                            const SizedBox(height: 24),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 20, right: 20),
-                              child: Container(
-                                height: 64,
-                                width: Get.width,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(24),
-                                  color: AppTheme.isLightTheme == false
-                                      ? const Color(0xff323045)
-                                      : Colors.transparent,
-                                  border: Border.all(
-                                    color:
-                                        HexColor(AppTheme.primaryColorString!)
-                                            .withOpacity(0.05),
-                                    width: 2,
-                                  ),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 16, right: 16),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      SvgPicture.asset(
-                                        DefaultImages.mastercard,
-                                      ),
-                                      const SizedBox(width: 15),
-                                      Text(
-                                        "Debit",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall!
-                                            .copyWith(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                      ),
-                                      const Expanded(child: SizedBox()),
-                                      Text(
-                                        "\$7,124",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyLarge!
-                                            .copyWith(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      const Icon(
-                                        Icons.keyboard_arrow_down_outlined,
-                                        color: Color(0xffA2A0A8),
-                                        size: 30,
-                                      )
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            )
-                          ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Text(
+                          "Seleccione una reserva pendiente",
+                          style: Theme.of(context).textTheme.titleLarge,
+                          textAlign: TextAlign.center,
                         ),
-                      ),
-                      const SizedBox(height: 50),
-                    ],
+                        const SizedBox(height: 20),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: DropdownButton<Reserva>(
+                            isExpanded: true,
+                            value: reservaSeleccionada,
+                            hint: const Text('Seleccione una reserva'),
+                            items: reservasPendientes.map((reserva) {
+                              return DropdownMenuItem<Reserva>(
+                                value: reserva,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text('Reserva: ${reserva.codigoReserva}'),
+                                    Text(
+                                      'Auto: ${reserva.chapaAuto} - \$${reserva.monto}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (Reserva? newValue) {
+                              setState(() {
+                                reservaSeleccionada = newValue;
+                              });
+                            },
+                          ),
+                        ),
+                        if (reservaSeleccionada != null) ...[
+                          const SizedBox(height: 20),
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Detalles de la Reserva',
+                                    style: Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text('Auto: ${reservaSeleccionada!.chapaAuto}'),
+                                  Text('Monto: \$${reservaSeleccionada!.monto}'),
+                                  Text('Desde: ${reservaSeleccionada!.horarioInicio.toString().substring(0, 16)}'),
+                                  Text('Hasta: ${reservaSeleccionada!.horarioSalida.toString().substring(0, 16)}'),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Duración: ${calcularTiempo(
+                                      reservaSeleccionada!.horarioInicio,
+                                      reservaSeleccionada!.horarioSalida,
+                                    )}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).padding.bottom,
-            ),
-            child: Swipe(
-              onSwipeRight: () {
-                Get.bottomSheet(
-                  topupDialog(context),
-                );
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(
-                    left: 20, right: 20, top: 20, bottom: 20),
-                child: Container(
-                  height: 56,
-                  width: Get.width,
-                  decoration: BoxDecoration(
+          // Bottom Button
+          if (reservaSeleccionada != null)
+            Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).padding.bottom + 20,
+                left: 20,
+                right: 20,
+              ),
+              child: ElevatedButton(
+                onPressed: () async {
+                  if (reservaSeleccionada != null) {
+                    // Actualizar el estado de la reserva
+                    final db = LocalDBService();
+                    final reservas = await db.getAll("reservas.json");
+                    final index = reservas.indexWhere(
+                      (r) => r['codigoReserva'] == reservaSeleccionada!.codigoReserva
+                    );
+                    
+                    if (index != -1) {
+                      reservas[index]['estadoReserva'] = 'PAGADO';
+                      await db.saveAll("reservas.json", reservas);
+                      
+                      // Mostrar mensaje de éxito
+                      mostrarSnackBar(context, reservaSeleccionada!.codigoReserva);
+                      
+                      // Esperar un momento antes de volver
+                      await Future.delayed(const Duration(seconds: 2));
+                      Navigator.pop(context);
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
-                    color: AppTheme.isLightTheme == false
-                        ? HexColor(AppTheme.primaryColorString!)
-                        : HexColor(AppTheme.primaryColorString!)
-                            .withOpacity(0.05),
                   ),
-                  child: Row(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: Container(
-                          height: 48,
-                          width: 48,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            color: AppTheme.isLightTheme == false
-                                ? Colors.white
-                                : HexColor(AppTheme.primaryColorString!),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: SvgPicture.asset(
-                              DefaultImages.swipe,
-                              color: AppTheme.isLightTheme == false
-                                  ? HexColor(AppTheme.primaryColorString!)
-                                  : Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const Expanded(child: SizedBox()),
-                      Text(
-                        "Swipe to top-up",
-                        style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                      ),
-                      const Expanded(child: SizedBox()),
-                    ],
+                ),
+                child: Text(
+                  "Pagar \$${reservaSeleccionada?.monto}",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
-          )
         ],
       ),
     );
