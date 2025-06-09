@@ -121,6 +121,7 @@ class Reserva {
   double monto;
   String estadoReserva;
   String chapaAuto; // solo la chapa
+  String? codigoLugar; // Agregar esta línea
 
   Reserva({
     required this.codigoReserva,
@@ -129,6 +130,7 @@ class Reserva {
     required this.monto,
     required this.estadoReserva,
     required this.chapaAuto,
+    this.codigoLugar, // Agregar esta línea
   });
 
   factory Reserva.fromJson(Map<String, dynamic> json) => Reserva(
@@ -138,6 +140,7 @@ class Reserva {
         monto: json['monto'].toDouble(),
         estadoReserva: json['estadoReserva'],
         chapaAuto: json['chapaAuto'] ?? '',
+        codigoLugar: json['codigoLugar'], // Agregar esta línea
       );
 
   Map<String, dynamic> toJson() => {
@@ -147,6 +150,7 @@ class Reserva {
         'monto': monto,
         'estadoReserva': estadoReserva,
         'chapaAuto': chapaAuto,
+        'codigoLugar': codigoLugar, // Agregar esta línea
       };
 }
 

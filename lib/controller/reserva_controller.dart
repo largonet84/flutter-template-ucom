@@ -1,3 +1,5 @@
+import 'package:finpay/controller/home_controller.dart';
+import 'package:finpay/controller/dashboard_controller.dart';
 import 'package:finpay/model/sistema_reservas.dart';
 import 'package:get/get.dart';
 import 'package:finpay/api/local.db.service.dart';
@@ -137,6 +139,46 @@ class ReservaController extends GetxController {
       // ...lógica de carga...
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> crearReserva() async {
+    try {
+      // Crear la reserva
+      final reservaCreada = Reserva(
+        codigoReserva: "RES-${DateTime.now().millisecondsSinceEpoch}",
+        horarioInicio: horarioInicio.value!,
+        horarioSalida: horarioSalida.value!,
+        monto: ((horarioSalida.value!.difference(horarioInicio.value!).inMinutes / 60) * 10000).roundToDouble(),
+        estadoReserva: "PENDIENTE",
+        chapaAuto: autoSeleccionado.value?.chapa ?? "",
+      );
+
+      // Guardar la reserva
+      final reservas = await db.getAll("reservas.json");
+      reservas.add(reservaCreada.toJson());
+      await db.saveAll("reservas.json", reservas);
+      
+      debugPrint("✅ Reserva creada exitosamente: ${reservaCreada.codigoReserva}");
+      
+      // Actualizar el HomeController si está registrado
+      if (Get.isRegistered<HomeController>()) {
+        final homeController = Get.find<HomeController>();
+        await homeController.refrescarDatos();
+        debugPrint("🔄 HomeController actualizado después de crear reserva");
+      }
+      
+      // Actualizar el DashboardController si está registrado
+      if (Get.isRegistered<DashboardController>()) {
+        final dashboardController = Get.find<DashboardController>();
+        await dashboardController.fetchDashboardData();
+        debugPrint("🔄 DashboardController actualizado después de crear reserva");
+      }
+      
+      // ...existing success navigation code...
+      
+    } catch (e) {
+      // ...existing error handling...
     }
   }
 

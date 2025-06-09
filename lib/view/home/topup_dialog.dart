@@ -3,6 +3,7 @@
 import 'package:finpay/model/sistema_reservas.dart';
 import 'package:finpay/api/local.db.service.dart';
 import 'package:finpay/controller/dashboard_controller.dart';
+import 'package:finpay/controller/home_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -94,19 +95,25 @@ Widget topupDialog(BuildContext context, Reserva reserva) {
                   colorText: Colors.white,
                 );
                 
+                // Actualizar el estado de la reserva
+                reserva.estadoReserva = "PAGADO";
+                await db.update("reservas.json", "codigoReserva", reserva.codigoReserva, reserva.toJson());
+                
+                debugPrint("✅ Pago procesado exitosamente para reserva: ${reserva.codigoReserva}");
+                
                 // Actualizar explícitamente el dashboard después del pago
                 if (Get.isRegistered<DashboardController>()) {
                   final dashboardController = Get.find<DashboardController>();
                   await dashboardController.fetchDashboardData();
-                  
-                  // Opcional: Imprimir para depuración
-                  debugPrint("Dashboard actualizado. Reservas pendientes: ${dashboardController.reservasPendientes.length}");
-                } else {
-                  debugPrint("¡DashboardController no está registrado!");
+                  debugPrint("🔄 Dashboard actualizado después del pago");
                 }
                 
-                // Actualizar cualquier otra vista si es necesario
-                // homeController.cargarPagosPrevios();
+                // Actualizar las listas de reservas en el HomeController
+                if (Get.isRegistered<HomeController>()) {
+                  final homeController = Get.find<HomeController>();
+                  await homeController.refrescarDatos();
+                  debugPrint("🔄 HomeController actualizado después del pago");
+                }
                 
               } catch (e) {
                 Get.snackbar(

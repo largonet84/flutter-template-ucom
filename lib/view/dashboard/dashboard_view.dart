@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:finpay/controller/dashboard_controller.dart';
-import 'package:finpay/controller/tab_controller.dart'; // Añadir este import
+import 'package:finpay/controller/tab_controller.dart';
 import 'package:finpay/model/sistema_reservas.dart';
 import 'package:finpay/utils/utiles.dart';
 import '../../config/textstyle.dart';

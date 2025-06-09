@@ -69,12 +69,24 @@ class _TabScreenState extends State<TabScreen> {
       body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) {
+        onTap: (index) async {
           // Actualizar tanto el estado local como el controlador
           setState(() {
             _currentIndex = index;
           });
           tabController.pageIndex.value = index;
+          
+          // Si cambia a la pestaña Home (índice 0), actualizar datos
+          if (index == 0 && Get.isRegistered<HomeController>()) {
+            final homeController = Get.find<HomeController>();
+            await homeController.refrescarDatos();
+          }
+          
+          // Si cambia a la pestaña Dashboard (índice 1), actualizar datos
+          if (index == 1 && Get.isRegistered<DashboardController>()) {
+            final dashboardController = Get.find<DashboardController>();
+            await dashboardController.fetchDashboardData();
+          }
         },
         items: [
           BottomNavigationBarItem(
