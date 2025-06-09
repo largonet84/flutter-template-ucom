@@ -1,59 +1,96 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:finpay/controller/home_controller.dart';
+import 'package:finpay/controller/dashboard_controller.dart';
+import 'package:finpay/controller/tab_controller.dart';
 import 'package:finpay/view/home/home_view.dart';
 import 'package:finpay/view/dashboard/dashboard_view.dart';
 import 'package:finpay/view/profile/setting_screen.dart';
 
 class TabScreen extends StatefulWidget {
-  const TabScreen({Key? key}) : super(key: key);
+  const TabScreen({super.key});
 
   @override
-  _TabScreenState createState() => _TabScreenState();
+  State<TabScreen> createState() => _TabScreenState();
 }
 
 class _TabScreenState extends State<TabScreen> {
   late HomeController homeController;
+  late TabScreenController tabController;
   late List<Widget> _pages;
   int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    homeController = HomeController();
+    
+    // Crear los controladores si no existen
+    if (!Get.isRegistered<HomeController>()) {
+      homeController = Get.put(HomeController(), permanent: true);
+    } else {
+      homeController = Get.find<HomeController>();
+    }
+    
+    // Asegurarse que el DashboardController también esté disponible
+    if (!Get.isRegistered<DashboardController>()) {
+      Get.put(DashboardController(), permanent: true);
+    }
+    
+    // Crear o encontrar el TabScreenController
+    if (!Get.isRegistered<TabScreenController>()) {
+      tabController = Get.put(TabScreenController(), permanent: true);
+    } else {
+      tabController = Get.find<TabScreenController>();
+    }
+    
     _pages = [
       HomeView(homeController: homeController),
-      DashboardView(homeController: homeController),
-      SettingScreen()  // Pantalla de perfil/ajustes, sin controller compartido
+      const DashboardView(),
+      const SettingScreen()
     ];
+    
+    // Escuchar cambios en el índice de la pestaña
+    ever(tabController.pageIndex, (index) {
+      if (mounted) {
+        setState(() {
+          _currentIndex = index as int;
+        });
+      }
+    });
   }
-
+  
   @override
   Widget build(BuildContext context) {
-    // Colores para íconos activo/inactivo (ejemplo usando el tema actual)
+    // Colores para íconos activo/inactivo
     final activeColor = Theme.of(context).primaryColor;
-    final inactiveColor = activeColor.withOpacity(0.4);
+    final inactiveColor = activeColor.withValues(alpha: 102);
 
     return Scaffold(
       body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
+          // Actualizar tanto el estado local como el controlador
           setState(() {
             _currentIndex = index;
           });
+          tabController.pageIndex.value = index;
         },
         items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home, color: _currentIndex == 0 ? activeColor : inactiveColor),
+            icon: Icon(Icons.home,
+                color: _currentIndex == 0 ? activeColor : inactiveColor),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard, color: _currentIndex == 1 ? activeColor : inactiveColor),
+            icon: Icon(Icons.dashboard,
+                color: _currentIndex == 1 ? activeColor : inactiveColor),
             label: 'Dashboard',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person, color: _currentIndex == 2 ? activeColor : inactiveColor),
-            label: 'Perfil',  // traducido de "profile" a "Perfil"
+            icon: Icon(Icons.person,
+                color: _currentIndex == 2 ? activeColor : inactiveColor),
+            label: 'Perfil',
           ),
         ],
       ),

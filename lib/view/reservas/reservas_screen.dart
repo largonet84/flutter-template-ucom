@@ -1,41 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:finpay/controller/reserva_controller.dart';
 import 'package:finpay/model/sistema_reservas.dart';
 import 'package:finpay/utils/utiles.dart';
+import '../../widgets/loading_overlay.dart';
+import '../../config/textstyle.dart';
+import 'package:finpay/view/tab_screen.dart';
 
-class ReservaScreen extends StatelessWidget {
+class ReservaScreen extends StatefulWidget {
+  const ReservaScreen({super.key});
+
+  @override
+  State<ReservaScreen> createState() => _ReservaScreenState();
+}
+
+class _ReservaScreenState extends State<ReservaScreen> {
   final controller = Get.put(ReservaController());
-
-  ReservaScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Reservar lugar")),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Obx(() {
-            return Column(
+      body: Obx(() => LoadingOverlay(
+        isLoading: controller.isLoading.value,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(AppTheme.spacingMd),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text("Seleccionar auto",
                     style: TextStyle(fontWeight: FontWeight.bold)),
-                Obx(() {
-                  return DropdownButton<Auto>(
-                    isExpanded: true,
-                    value: controller.autoSeleccionado.value,
-                    hint: const Text("Seleccionar auto"),
-                    onChanged: (auto) {
-                      controller.autoSeleccionado.value = auto;
-                    },
-                    items: controller.autosCliente.map((a) {
-                      final nombre = "${a.chapa} - ${a.marca} ${a.modelo}";
-                      return DropdownMenuItem(value: a, child: Text(nombre));
-                    }).toList(),
-                  );
-                }),
+                _buildAutoSelector(),
                 const Text("Seleccionar piso",
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 DropdownButton<Piso>(
@@ -54,49 +51,52 @@ class ReservaScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 SizedBox(
                   height: 200,
-                  child: GridView.count(
-                    crossAxisCount: 5,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                    children: controller.lugaresDisponibles
-                        .where((l) =>
-                            l.codigoPiso ==
-                            controller.pisoSeleccionado.value?.codigo)
-                        .map((lugar) {
-                      final seleccionado =
-                          lugar == controller.lugarSeleccionado.value;
-                      final color = lugar.estado == "RESERVADO"
-                          ? Colors.red
-                          : seleccionado
-                              ? Colors.green
-                              : Colors.grey.shade300;
+                  child: GestureDetector(
+                    onTapDown: (_) => HapticFeedback.selectionClick(),
+                    child: GridView.count(
+                      crossAxisCount: 5,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      children: controller.lugaresDisponibles
+                          .where((l) =>
+                              l.codigoPiso ==
+                              controller.pisoSeleccionado.value?.codigo)
+                          .map((lugar) {
+                        final seleccionado =
+                            lugar == controller.lugarSeleccionado.value;
+                        final color = lugar.estado == "RESERVADO"
+                            ? Colors.red
+                            : seleccionado
+                                ? Colors.green
+                                : Colors.grey.shade300;
 
-                      return GestureDetector(
-                        onTap: lugar.estado == "DISPONIBLE"
-                            ? () => controller.lugarSeleccionado.value = lugar
-                            : null,
-                        child: Container(
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: color,
-                            border: Border.all(
-                                color: seleccionado
-                                    ? Colors.green.shade700
-                                    : Colors.black12),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            lugar.codigoLugar,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: lugar.estado == "reservado"
-                                  ? Colors.white
-                                  : Colors.black87,
+                        return GestureDetector(
+                          onTap: lugar.estado == "DISPONIBLE"
+                              ? () => controller.lugarSeleccionado.value = lugar
+                              : null,
+                          child: Container(
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: color,
+                              border: Border.all(
+                                  color: seleccionado
+                                      ? Colors.green.shade700
+                                      : Colors.black12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              lugar.codigoLugar,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: lugar.estado == "reservado"
+                                    ? Colors.white
+                                    : Colors.black87,
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    }).toList(),
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -112,15 +112,20 @@ class ReservaScreen extends StatelessWidget {
                             context: context,
                             initialDate: DateTime.now(),
                             firstDate: DateTime.now(),
-                            lastDate:
-                                DateTime.now().add(const Duration(days: 30)),
+                            lastDate: DateTime.now().add(const Duration(days: 30)),
                           );
+                          // Verificar mounted aquí
+                          if (!mounted) return;
                           if (date == null) return;
+                          
                           final time = await showTimePicker(
                             context: context,
                             initialTime: TimeOfDay.now(),
                           );
+                          // Verificar mounted nuevamente después de la segunda operación asíncrona
+                          if (!mounted) return;
                           if (time == null) return;
+                          
                           controller.horarioInicio.value = DateTime(
                             date.year,
                             date.month,
@@ -149,12 +154,16 @@ class ReservaScreen extends StatelessWidget {
                             lastDate:
                                 DateTime.now().add(const Duration(days: 30)),
                           );
+                          if (!mounted) return;
                           if (date == null) return;
+                          
                           final time = await showTimePicker(
                             context: context,
                             initialTime: TimeOfDay.now(),
                           );
+                          if (!mounted) return;
                           if (time == null) return;
+                          
                           controller.horarioSalida.value = DateTime(
                             date.year,
                             date.month,
@@ -228,7 +237,10 @@ class ReservaScreen extends StatelessWidget {
                       ),
                     ),
                     onPressed: () async {
+                      HapticFeedback.mediumImpact();
                       final confirmada = await controller.confirmarReserva();
+
+                      if (!mounted) return;
 
                       if (confirmada) {
                         Get.snackbar(
@@ -237,11 +249,12 @@ class ReservaScreen extends StatelessWidget {
                           snackPosition: SnackPosition.BOTTOM,
                         );
 
-                        // Esperá un poco para que el snackbar se muestre
-                        await Future.delayed(
-                            const Duration(milliseconds: 2000));
-
-                        Get.back();
+                        await Future.delayed(const Duration(milliseconds: 2000));
+                        
+                        if (!mounted) return;
+                        
+                        // Cambiar la navegación para usar el constructor directamente
+                        Get.offAll(() => const TabScreen());
                       } else {
                         Get.snackbar(
                           "Error",
@@ -252,16 +265,47 @@ class ReservaScreen extends StatelessWidget {
                         );
                       }
                     },
-                    child: const Text(
-                      "Confirmar Reserva",
-                      style: TextStyle(fontSize: 16),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: controller.isLoading.value
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              "Confirmar Reserva",
+                              style: TextStyle(fontSize: 16),
+                            ),
                     ),
                   ),
                 ),
               ],
-            );
-          }),
+            ),
+          ),
         ),
+      )),
+    );
+  }
+
+  Widget _buildAutoSelector() {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: controller.autoSeleccionado.value != null 
+            ? Get.theme.primaryColor 
+            : Colors.grey,
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButton<Auto>(
+        isExpanded: true,
+        value: controller.autoSeleccionado.value,
+        hint: const Text("Seleccionar auto"),
+        onChanged: (auto) {
+          controller.autoSeleccionado.value = auto;
+        },
+        items: controller.autosCliente.map((a) {
+          final nombre = "${a.chapa} - ${a.marca} ${a.modelo}";
+          return DropdownMenuItem(value: a, child: Text(nombre));
+        }).toList(),
       ),
     );
   }

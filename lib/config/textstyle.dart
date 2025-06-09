@@ -8,6 +8,11 @@ class AppTheme {
   static String? secondaryColorString = "#F5F7FE";
   static bool isLightTheme = true;
 
+  static const double spacingXs = 4.0;
+  static const double spacingSm = 8.0;
+  static const double spacingMd = 16.0;
+  static const double spacingLg = 24.0;
+
   static ThemeData getTheme() {
     if (isLightTheme) {
       return lightTheme();
@@ -16,7 +21,7 @@ class AppTheme {
     }
   }
 
- static TextTheme _buildTextTheme(TextTheme base) {
+  static TextTheme _buildTextTheme(TextTheme base) {
     return base.copyWith(
       titleLarge: GoogleFonts.ubuntu(
         textStyle: TextStyle(
@@ -91,7 +96,6 @@ class AppTheme {
       ),
     );
   }
-
 
   static ThemeData lightTheme() {
     Color primaryColor = HexColor(primaryColorString!);

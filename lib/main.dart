@@ -1,7 +1,11 @@
 // ignore_for_file: library_private_types_in_public_api
 
 import 'package:finpay/config/textstyle.dart';
+import 'package:finpay/controller/dashboard_controller.dart';
+import 'package:finpay/controller/home_controller.dart';
+import 'package:finpay/controller/tab_controller.dart';
 import 'package:finpay/view/splash/splash.dart';
+import 'package:finpay/view/tab_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -28,7 +32,7 @@ void main() async {
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   static setCustomeTheme(BuildContext context, int index) async {
     final _MyAppState? state = context.findAncestorStateOfType<_MyAppState>();
@@ -68,7 +72,19 @@ class _MyAppState extends State<MyApp> {
       title: 'FinPay',
       theme: AppTheme.getTheme(),
       debugShowCheckedModeBanner: false,
-      home: const SplashScreen(),
+      initialRoute: '/',
+      getPages: [
+        GetPage(name: '/', page: () => const SplashScreen()),
+        GetPage(
+          name: '/home',
+          page: () => const TabScreen(),
+          binding: BindingsBuilder(() {
+            Get.put(HomeController(), permanent: true);
+            Get.put(DashboardController(), permanent: true);
+          }),
+        ),
+        // ... otras rutas
+      ],
     );
   }
 }

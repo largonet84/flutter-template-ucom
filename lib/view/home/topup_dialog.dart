@@ -2,6 +2,7 @@
 
 import 'package:finpay/model/sistema_reservas.dart';
 import 'package:finpay/api/local.db.service.dart';
+import 'package:finpay/controller/dashboard_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -61,27 +62,61 @@ Widget topupDialog(BuildContext context, Reserva reserva) {
             ),
             padding: const EdgeInsets.symmetric(vertical: 15),
             onPressed: () async {
-              if (!context.mounted) return;
-
-              final db = LocalDBService();
-              await db.update(
-                "reservas.json",
-                "codigoReserva",
-                reserva.codigoReserva,
-                {...reserva.toJson(), 'estadoReserva': 'PAGADO'}
-              );
-
-              if (!context.mounted) return;
-
+              // Cerrar diálogo inmediatamente para evitar problemas de UI
               Navigator.of(context).pop();
-              Navigator.of(context).pop();
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Reserva número ${reserva.codigoReserva} pagada'),
-                  backgroundColor: Colors.green,
-                ),
-              );
+              
+              try {
+                // Guardar la actualización
+                final db = LocalDBService();
+                await db.update(
+                  "reservas.json",
+                  "codigoReserva",
+                  reserva.codigoReserva,
+                  {...reserva.toJson(), 'estadoReserva': 'PAGADO'}
+                );
+                
+                // También guardar el registro de pago
+                final pagos = await db.getAll("pagos.json");
+                pagos.add({
+                  'id': DateTime.now().millisecondsSinceEpoch.toString(),
+                  'codigoReservaAsociada': reserva.codigoReserva,
+                  'montoPagado': reserva.monto,
+                  'fechaPago': DateTime.now().toIso8601String(),
+                });
+                await db.saveAll("pagos.json", pagos);
+                
+                // Mostrar mensaje de éxito
+                Get.snackbar(
+                  'Pago confirmado',
+                  'Reserva #${reserva.codigoReserva} pagada exitosamente',
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: Colors.green.withValues(alpha: 179),
+                  colorText: Colors.white,
+                );
+                
+                // Actualizar explícitamente el dashboard después del pago
+                if (Get.isRegistered<DashboardController>()) {
+                  final dashboardController = Get.find<DashboardController>();
+                  await dashboardController.fetchDashboardData();
+                  
+                  // Opcional: Imprimir para depuración
+                  debugPrint("Dashboard actualizado. Reservas pendientes: ${dashboardController.reservasPendientes.length}");
+                } else {
+                  debugPrint("¡DashboardController no está registrado!");
+                }
+                
+                // Actualizar cualquier otra vista si es necesario
+                // homeController.cargarPagosPrevios();
+                
+              } catch (e) {
+                Get.snackbar(
+                  'Error',
+                  'No se pudo procesar el pago: $e',
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: Colors.red.withValues(alpha: 179),
+                  colorText: Colors.white,
+                );
+              }
             },
             child: const Text(
               "Confirmar",
@@ -103,7 +138,7 @@ Widget _buildDetailRow(BuildContext context, String label, String value) {
         Text(
           label,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.grey,
+                color: Colors.grey.withValues(alpha: 179),
               ),
         ),
         Text(

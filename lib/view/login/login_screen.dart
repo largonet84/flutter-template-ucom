@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_function_literals_in_foreach_calls, library_private_types_in_public_api, deprecated_member_use
-
 import 'package:finpay/config/images.dart';
 import 'package:finpay/controller/login_controller.dart';
 import 'package:finpay/view/signup/signup_screen.dart';
@@ -39,13 +37,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: WillPopScope(
-        onWillPop: () async {
-          SystemNavigator.pop();
-          return false;
-        },
-        child: InkWell(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        SystemNavigator.pop();
+      },
+      child: Scaffold(
+        body: InkWell(
           focusColor: Colors.transparent,
           highlightColor: Colors.transparent,
           hoverColor: Colors.transparent,
@@ -145,10 +144,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                   padding: const EdgeInsets.all(14.0),
                                   child: SvgPicture.asset(
                                     DefaultImages.pswd,
-                                    color: _focusNodes[1].hasFocus
-                                        ? HexColor(AppTheme.primaryColorString!)
-                                        : const Color(0xffA2A0A8),
-                                    // color:  HexColor(AppTheme.secondaryColorString!)
+                                    colorFilter: ColorFilter.mode(
+                                      _focusNodes[1].hasFocus
+                                          ? HexColor(AppTheme.primaryColorString!)
+                                          : const Color(0xffA2A0A8),
+                                      BlendMode.srcIn,
+                                    ),
                                   ),
                                 ),
                                 hintText: "Clave",

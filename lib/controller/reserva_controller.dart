@@ -1,6 +1,7 @@
 import 'package:finpay/model/sistema_reservas.dart';
 import 'package:get/get.dart';
 import 'package:finpay/api/local.db.service.dart';
+import 'package:flutter/foundation.dart';
 
 class ReservaController extends GetxController {
   RxList<Piso> pisos = <Piso>[].obs;
@@ -15,6 +16,9 @@ class ReservaController extends GetxController {
   Rx<Auto?> autoSeleccionado = Rx<Auto?>(null);
   String codigoClienteActual =
       'cliente_1'; // ← este puede venir de login o contexto
+
+  final isLoading = false.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -105,7 +109,8 @@ class ReservaController extends GetxController {
 
       return true;
     } catch (e) {
-      print("Error al guardar reserva: $e");
+      debugPrint("Error al guardar reserva: $e");
+      // O mejor aún, implementar un logger adecuado como log4dart
       return false;
     }
   }
@@ -124,6 +129,15 @@ class ReservaController extends GetxController {
 
     autosCliente.value =
         autos.where((a) => a.clienteId == codigoClienteActual).toList();
+  }
+
+  Future<void> loadData() async {
+    try {
+      isLoading.value = true;
+      // ...lógica de carga...
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   @override
